@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { api } from '../api';
 
 function Contact() {
-  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [submissionId, setSubmissionId] = useState('');
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -21,13 +23,25 @@ function Contact() {
     });
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-
-    // Assignment 1 does not require storing or sending the message.
-    console.log('Contact form submission:', formData);
-
-    navigate('/');
+    setError('');
+    setSubmissionId('');
+    const data = Object.fromEntries(Object.entries(formData).map(([key, value]) => [key, value.trim()]));
+    if (Object.values(data).some(value => !value)) {
+      setError('Fill in each field before sending your message.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await api('contact-submissions', { method: 'POST', data });
+      setSubmissionId(result.submissionId);
+      setFormData({ firstName: '', lastName: '', phone: '', email: '', message: '' });
+    } catch (failure) {
+      setError(failure.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -50,6 +64,9 @@ function Contact() {
           onSubmit={handleSubmit}
         >
 
+          {error && <p role="alert">{error}</p>}
+          {submissionId && <p role="status">Message sent. Reference {submissionId}</p>}
+          <fieldset disabled={busy} className="portfolio-fields">
           <div className="form-row">
 
             <div className="form-group">
@@ -59,7 +76,7 @@ function Contact() {
 
               <input
                 id="firstName"
-                name="firstName"
+                name="firstName" maxLength={100}
                 type="text"
                 value={formData.firstName}
                 onChange={handleChange}
@@ -74,7 +91,7 @@ function Contact() {
 
               <input
                 id="lastName"
-                name="lastName"
+                name="lastName" maxLength={100}
                 type="text"
                 value={formData.lastName}
                 onChange={handleChange}
@@ -91,7 +108,7 @@ function Contact() {
 
             <input
               id="phone"
-              name="phone"
+              name="phone" maxLength={40}
               type="tel"
               value={formData.phone}
               onChange={handleChange}
@@ -106,7 +123,7 @@ function Contact() {
 
             <input
               id="email"
-              name="email"
+              name="email" maxLength={254}
               type="email"
               value={formData.email}
               onChange={handleChange}
@@ -121,7 +138,7 @@ function Contact() {
 
             <textarea
               id="message"
-              name="message"
+              name="message" maxLength={4000}
               rows="6"
               value={formData.message}
               onChange={handleChange}
@@ -133,9 +150,10 @@ function Contact() {
             type="submit"
             className="button primary"
           >
-            Send Message
+            {busy ? 'Sending…' : 'Send Message'}
           </button>
 
+          </fieldset>
         </form>
 
       </div>
