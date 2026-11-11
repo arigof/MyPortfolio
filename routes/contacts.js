@@ -1,4 +1,5 @@
 import express from "express";
+import { requireUser, requireAdmin } from "../middleware/auth.js";
 
 import {
   getContacts,
@@ -9,6 +10,7 @@ import {
 } from "../controllers/contactControllers.js";
 
 const router = express.Router();
+router.use(requireUser, requireAdmin);
 
 router.get("/", getContacts);
 router.get("/:id", getContact);

@@ -1,4 +1,5 @@
 import Qualification from "../models/Qualification.js";
+import { portfolioInput } from "./recordValidation.js";
 
 export const getQualifications = async (req, res) => {
   try {
@@ -24,48 +25,22 @@ export const getQualification = async (req, res) => {
 };
 
 export const createQualification = async (req, res) => {
-  try {
-    const { title, completionDate, description } = req.body;
-
-    if (!title || !completionDate || !description) {
-      return res.status(400).json({
-        message: "Title, completion date, and description are required.",
-      });
-    }
-
-    const qualification = await Qualification.create({
-      title,
-      completionDate,
-      description,
-    });
-
-    res.status(201).json(qualification);
-  } catch (error) {
-    res.status(400).json({ message: "Failed to create qualification." });
-  }
+  const data = portfolioInput(req.body ?? {});
+  if (!data) return res.status(400).json({ message: "Enter a title, a valid completion date, and a description within the length limits." });
+  res.status(201).json(await Qualification.create(data));
 };
 
 export const updateQualification = async (req, res) => {
-  try {
-    const { title, completionDate, description } = req.body;
-
-    const qualification = await Qualification.findByIdAndUpdate(
-      req.params.id,
-      { title, completionDate, description },
-      { new: true, runValidators: true }
-    );
-
-    if (!qualification) {
-      return res.status(404).json({ message: "Qualification not found." });
-    }
-
-    res.status(200).json(qualification);
-  } catch (error) {
-    res.status(400).json({ message: "Failed to update qualification." });
-  }
+  const data = portfolioInput(req.body ?? {});
+  if (!data) return res.status(400).json({ message: "Enter a title, a valid completion date, and a description within the length limits." });
+  const record = await Qualification.findByIdAndUpdate(req.params.id, { $set: data }, {
+    new: true,
+    runValidators: true,
+  });
+  if (!record) return res.status(404).json({ message: "Qualification not found." });
+  res.json(record);
 };
 
-// DELETE a qualification
 export const deleteQualification = async (req, res) => {
   try {
     const qualification = await Qualification.findByIdAndDelete(

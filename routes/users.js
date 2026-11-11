@@ -1,8 +1,10 @@
 import express from "express";
+import { requireUser, requireAdmin } from "../middleware/auth.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 
 const router = express.Router();
+router.use(requireUser, requireAdmin);
 
 const safeUser = (user) => {
   const result = user.toObject ? user.toObject() : { ...user };
@@ -14,7 +16,7 @@ const safeUser = (user) => {
 
 router.get("/", async (req, res) => {
   try {
-    const users = await User.find().select("+password +hashed_password");
+    const users = await User.find();
     res.status(200).json(users.map(safeUser));
   } catch (error) {
     res.status(500).json({ message: "Unable to retrieve users." });
@@ -23,7 +25,7 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("+password +hashed_password");
+    const user = await User.findById(req.params.id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -37,9 +39,9 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body ?? {};
 
-    if (!name || !email || !password) {
+    if (typeof name !== "string" || !name.trim() || typeof email !== "string" || !email.trim() || !password) {
       return res.status(400).json({
         message: "Name, email, and password are required."
       });
@@ -60,12 +62,10 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
-      password: hashedPassword
+      password: password
     });
 
     res.status(201).json(safeUser(user));
@@ -114,7 +114,7 @@ router.put("/:id", async (req, res) => {
         new: true,
         runValidators: true
       }
-    ).select("+password +hashed_password");
+    );
 
     if (!user) {
       return res.status(404).json({

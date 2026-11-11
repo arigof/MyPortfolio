@@ -1,4 +1,5 @@
 import express from "express";
+import { requireUser, requireAdmin } from "../middleware/auth.js";
 
 import {
   getQualifications,
@@ -9,15 +10,16 @@ import {
 } from "../controllers/qualificationControllers.js";
 
 const router = express.Router();
+router.use(requireUser);
 
 router.get("/", getQualifications);
 
 router.get("/:id", getQualification);
 
-router.post("/", createQualification);
+router.post("/", requireAdmin, createQualification);
 
-router.put("/:id", updateQualification);
+router.put("/:id", requireAdmin, updateQualification);
 
-router.delete("/:id", deleteQualification);
+router.delete("/:id", requireAdmin, deleteQualification);
 
 export default router;

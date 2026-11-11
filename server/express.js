@@ -1,8 +1,6 @@
 import express from "express";
-import bodyParser from "body-parser";
-import cookieParser from "cookie-parser";
 import compress from "compression";
-import cors from "cors";
+import { submitContact } from "../controllers/contactControllers.js";
 import helmet from "helmet";
 
 import authRoutes from "../routes/auth.js";
@@ -13,14 +11,9 @@ import userRoutes from "../routes/users.js";
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(express.json({ limit: "32kb" }));
 app.use(compress());
 app.use(helmet());
-app.use(cors());
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -28,6 +21,7 @@ app.get("/", (req, res) => {
   });
 });
 
+app.post("/api/contact-submissions", submitContact);
 app.use("/api/auth", authRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/projects", projectRoutes);
@@ -38,6 +32,16 @@ app.use((req, res) => {
   res.status(404).json({
     message: "Route not found."
   });
+});
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  if (error.type === "entity.too.large") return res.status(413).json({ message: "Request is too large." });
+  if (error.type === "entity.parse.failed") return res.status(400).json({ message: "Invalid JSON." });
+  if (error.name === "CastError" || error.name === "ValidationError") {
+    return res.status(400).json({ message: "Invalid record data or ID." });
+  }
+  res.status(500).json({ message: "The server could not complete the request." });
 });
 
 export default app;
