@@ -60,6 +60,7 @@ function Projects() {
                 alt={project.title}
                 width={index === 0 ? 225 : index === 1 ? 640 : 800}
                 height={index === 0 ? 225 : index === 1 ? 420 : 800}
+                fetchPriority={index === 0 ? 'high' : 'auto'}
                 loading={index === 0 ? 'eager' : 'lazy'}
                 decoding="async"
               />
