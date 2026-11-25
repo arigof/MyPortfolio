@@ -1,4 +1,5 @@
 import express from "express";
+import { requireUser, requireAdmin } from "../middleware/auth.js";
 
 import {
   getProjects,
@@ -9,11 +10,12 @@ import {
 } from "../controllers/projectControllers.js";
 
 const router = express.Router();
+router.use(requireUser);
 
 router.get("/", getProjects);
 router.get("/:id", getProject);
-router.post("/", createProject);
-router.put("/:id", updateProject);
-router.delete("/:id", deleteProject);
+router.post("/", requireAdmin, createProject);
+router.put("/:id", requireAdmin, updateProject);
+router.delete("/:id", requireAdmin, deleteProject);
 
 export default router;

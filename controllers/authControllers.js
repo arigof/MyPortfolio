@@ -1,149 +1,56 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import config from "../config/config.js";
 
-const createToken = (user) => {
-  const secret = process.env.JWT_SECRET;
+export const validEmail = (email) =>
+  typeof email === "string" && email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+export const validPassword = (password) =>
+  typeof password === "string" && password.length >= 8 && Buffer.byteLength(password) <= 72;
 
-  if (!secret || secret === "YOUR_GENERATED_SECRET") {
-    throw new Error("JWT_SECRET is missing or has not been configured.");
-  }
+export const publicUser = ({ _id, name, email, role }) => ({ id: _id, name, email, role });
 
-  return jwt.sign(
-    {
-      id: user._id,
-      email: user.email,
-    },
-    secret,
-    {
-      expiresIn: "1h",
-    }
-  );
-};
-
-export const signup = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        message: "Name, email, and password are required.",
-      });
-    }
-
-    if (typeof password !== "string" || password.length < 8) {
-      return res.status(400).json({
-        message: "Password must be at least 8 characters.",
-      });
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const existingUser = await User.findOne({
-      email: normalizedEmail,
-    });
-
-    if (existingUser) {
-      return res.status(409).json({
-        message: "Email is already registered.",
-      });
-    }
-
-    const user = await User.create({
-      name: name.trim(),
-      email: normalizedEmail,
-      password,
-    });
-
-    const token = createToken(user);
-
-    return res.status(201).json({
-      message: "Account created successfully.",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    console.error("Signup error:", error.message);
-
-    if (error.code === 11000) {
-      return res.status(409).json({
-        message: "Email is already registered.",
-      });
-    }
-
-    return res.status(500).json({
-      message: "Unable to create account.",
-    });
-  }
-};
-
-export const signin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (
-      typeof email !== "string" ||
-      typeof password !== "string" ||
-      !email.trim() ||
-      !password
-    ) {
-      return res.status(400).json({
-        message: "Email and password are required.",
-      });
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-
-    const user = await User.findOne({
-      email: normalizedEmail,
-    }).select("+password");
-
-    if (!user) {
-      return res.status(401).json({
-        message: "Invalid email or password.",
-      });
-    }
-
-    if (!user.password) {
-      throw new Error("Password hash was not loaded from the database.");
-    }
-
-    const passwordMatches = await bcrypt.compare(
-      password,
-      user.password
-    );
-
-    if (!passwordMatches) {
-      return res.status(401).json({
-        message: "Invalid email or password.",
-      });
-    }
-
-    const token = createToken(user);
-
-    return res.status(200).json({
-      message: "Signed in successfully.",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    console.error("Signin error:", error.message);
-
-    return res.status(500).json({
-      message: "Unable to sign in.",
-    });
-  }
-};
-
-export const signout = (req, res) => {
-  return res.status(200).json({
-    message: "Signed out successfully. Remove the token from the client.",
+function session(user) {
+  const token = jwt.sign({}, config.jwtSecret, {
+    algorithm: "HS256",
+    subject: String(user._id),
+    issuer: "my-portfolio",
+    audience: "portfolio-api",
+    expiresIn: "1h",
   });
-};
+  return { token, user: publicUser(user), expiresIn: 3600 };
+}
+
+export async function signup(req, res) {
+  const { name, email, password } = req.body ?? {};
+  if (typeof name !== "string" || !name.trim() || name.trim().length > 100 ||
+      !validEmail(email) || !validPassword(password)) {
+    return res.status(400).json({ message: "Enter a name (up to 100 characters), a valid email, and a password of at least 8 characters and at most 72 bytes." });
+  }
+
+  try {
+    const user = await User.create({ name, email, password, role: "user" });
+    res.status(201).json(session(user));
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Email is already registered." });
+    }
+    throw error;
+  }
+}
+
+export async function signin(req, res) {
+  const { email, password } = req.body ?? {};
+  if (!validEmail(email) || !validPassword(password)) {
+    return res.status(400).json({ message: "Enter a valid email and password." });
+  }
+  const user = await User.findOne({ email: email.trim().toLowerCase() }).select("+password");
+  if (!user?.password || !(await bcrypt.compare(password, user.password))) {
+    return res.status(401).json({ message: "Invalid email or password." });
+  }
+  res.json(session(user));
+}
+
+export function signout(req, res) {
+  res.status(204).end();
+}

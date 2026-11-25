@@ -1,7 +1,7 @@
 const projects = [
   {
     title: 'Personal Calculator',
-    image: '/images/project1.jpg',
+    image: '/images/project1.webp',
     description:
       'A simple calculator application that allows users to perform basic mathematical operations through an easy to use interface.',
     role: 'Developer',
@@ -11,7 +11,7 @@ const projects = [
   },
   {
     title: 'To-Do List',
-    image: '/images/project2.jpg',
+    image: '/images/project2.webp',
     description:
       'A simple task management application that allows users to add, complete, and remove tasks.',
     role: 'Developer',
@@ -21,7 +21,7 @@ const projects = [
   },
   {
     title: 'Student Grade Calculator',
-    image: '/images/project3.jpg',
+    image: '/images/project3.webp',
     description:
       'A small application that calculates a student’s average grade based on entered assignment and test marks.',
     role: 'Developer',
@@ -49,7 +49,7 @@ function Projects() {
 
         <div className="projects-grid">
 
-          {projects.map((project) => (
+          {projects.map((project, index) => (
             <article
               className="project-card"
               key={project.title}
@@ -58,6 +58,11 @@ function Projects() {
               <img
                 src={project.image}
                 alt={project.title}
+                width={index === 0 ? 225 : index === 1 ? 640 : 800}
+                height={index === 0 ? 225 : index === 1 ? 420 : 800}
+                fetchPriority={index === 0 ? 'high' : 'auto'}
+                loading={index === 0 ? 'eager' : 'lazy'}
+                decoding="async"
               />
 
               <div className="project-content">

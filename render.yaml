@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ariel-portfolio
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm ci && npm ci --prefix client && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_VERSION
+        value: 24.16.0
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false

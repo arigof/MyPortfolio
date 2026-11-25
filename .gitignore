@@ -4,3 +4,10 @@ client/node_modules/
 client/dist/
 .history/
 .DS_Store
+.env.*
+!.env.example
+dist/
+coverage/
+*.log
+evidence/
+cypress/downloads/
