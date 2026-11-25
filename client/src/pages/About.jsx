@@ -5,7 +5,7 @@ function About() {
 
         <div className="about-image">
           <img
-            src="/images/profile.jpg"
+            src="/images/profile.webp" width="250" height="323"
             alt="Ariel Gofman"
           />
         </div>
@@ -34,13 +34,8 @@ function About() {
             other software development apps and softwares.
           </p>
 
-          <a
-            href="/resume.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="button primary"
-          >
-            View My Resume
+          <a href="/contact" className="button primary">
+            Discuss my experience
           </a>
 
         </div>

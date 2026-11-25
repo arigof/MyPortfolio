@@ -9,3 +9,5 @@ client/dist/
 dist/
 coverage/
 *.log
+evidence/
+cypress/downloads/

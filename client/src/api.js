@@ -7,7 +7,7 @@ export async function api(path, { token, method = 'GET', data, signal } = {}) {
   try {
     const options = { method, headers, signal };
     if (data !== undefined) options.body = JSON.stringify(data);
-    response = await fetch(`/api/${path}`, options);
+    response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/${path}`, options);
   } catch (error) {
     if (error.name === 'AbortError') throw error;
     throw new Error('Could not reach the API. Try again.');
@@ -16,7 +16,7 @@ export async function api(path, { token, method = 'GET', data, signal } = {}) {
   if (response.status === 204) return;
   const result = await response.json().catch(() => null);
   if (!response.ok || result === null) {
-    const error = new Error(result?.message || 'The API could not complete the request.');
+    const error = new Error(result?.message || 'The API is unavailable. Check that the backend is running and the API URL is configured.');
     error.status = response.status;
     throw error;
   }

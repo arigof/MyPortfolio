@@ -2,6 +2,7 @@ import express from "express";
 import { requireUser, requireAdmin } from "../middleware/auth.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
+import { validEmail, validPassword } from "../controllers/authControllers.js";
 
 const router = express.Router();
 router.use(requireUser, requireAdmin);
@@ -41,15 +42,15 @@ router.post("/", async (req, res) => {
   try {
     const { name, email, password } = req.body ?? {};
 
-    if (typeof name !== "string" || !name.trim() || typeof email !== "string" || !email.trim() || !password) {
+    if (typeof name !== "string" || !name.trim() || !validEmail(email) || !password) {
       return res.status(400).json({
         message: "Name, email, and password are required."
       });
     }
 
-    if (typeof password !== "string" || password.length < 8) {
+    if (!validPassword(password)) {
       return res.status(400).json({
-        message: "Password must be at least 8 characters."
+        message: "Password must be at least 8 characters and at most 72 bytes."
       });
     }
 
@@ -90,17 +91,17 @@ router.put("/:id", async (req, res) => {
       updates.name = req.body.name.trim();
     }
 
-    if (typeof req.body.email === "string") {
+    if (req.body.email !== undefined) {
+      if (!validEmail(req.body.email)) return res.status(400).json({ message: "Enter a valid email." });
       updates.email = req.body.email.trim().toLowerCase();
     }
 
     if (req.body.password !== undefined) {
       if (
-        typeof req.body.password !== "string" ||
-        req.body.password.length < 8
+        !validPassword(req.body.password)
       ) {
         return res.status(400).json({
-          message: "Password must be at least 8 characters."
+          message: "Password must be at least 8 characters and at most 72 bytes."
         });
       }
 

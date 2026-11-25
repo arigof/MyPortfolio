@@ -11,7 +11,7 @@ function Home() {
           Hi, I'm <span>Ariel Gofman</span>
         </h1>
 
-        <h2>IT Professional & Software Developer</h2>
+        <h2>IT Professional & Full-Stack Developer</h2>
 
         <p>
           I am an IT professional and software development student
