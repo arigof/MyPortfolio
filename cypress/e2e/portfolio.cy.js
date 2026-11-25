@@ -60,7 +60,7 @@ describe('Full-stack portfolio release', () => {
       submissionId = response.body.submissionId;
     });
     cy.contains('Message sent. Reference').should('be.visible');
-    cy.screenshot('contact-submitted');
+    cy.get('form').screenshot('contact-submitted');
     cy.then(() => cy.task('savedContact', submissionId, { log: false })).then(saved => {
       expect(saved.message).to.eq('Final release contact trace');
       expect(saved.email).to.eq('trace@example.test');
@@ -83,7 +83,7 @@ describe('Full-stack portfolio release', () => {
     cy.get('[name="description"]').clear().type('Updated in the browser.');
     cy.contains('button', 'Save record').click();
     cy.contains('Record updated.').should('be.visible');
-    cy.screenshot('administrator-project-updated');
+    cy.contains('article', project.title).screenshot('administrator-project-updated');
 
     cy.then(() => {
       api('POST', 'qualifications', adminToken, { ...project, title: 'Reader qualification' }, 201);
@@ -140,7 +140,7 @@ describe('Full-stack portfolio release', () => {
       cy.contains('button', 'Confirm delete').click();
     });
     cy.contains('Record deleted.').should('be.visible');
-    cy.screenshot('administrator-contact-trace');
+    cy.contains('article', 'Final release contact trace').screenshot('administrator-contact-trace');
     cy.contains('button', 'Sign out').click();
 
     signIn(credentials.userEmail, credentials.userPassword);
@@ -169,6 +169,6 @@ describe('Full-stack portfolio release', () => {
     cy.contains('a', 'Contact').first().click();
     cy.contains('h1', 'Contact Me').should('be.visible');
     cy.document().then(doc => expect(doc.documentElement.scrollWidth).to.be.at.most(390));
-    cy.screenshot('mobile-contact');
+    cy.screenshot('mobile-contact', { capture: 'viewport' });
   });
 });
